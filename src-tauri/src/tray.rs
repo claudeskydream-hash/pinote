@@ -30,6 +30,7 @@ const HISTORY_MORE_ID: &str = "history_more";
 const HISTORY_EMPTY_ID: &str = "history_empty";
 
 struct TrayMenuItems {
+    new_note: MenuItem<tauri::Wry>,
     history: Submenu<tauri::Wry>,
     show_hide: MenuItem<tauri::Wry>,
     settings: MenuItem<tauri::Wry>,
@@ -55,14 +56,16 @@ struct HistoryEntry {
 
 pub fn setup_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let text = locale::current_text(app);
+    let new_note = MenuItem::with_id(app, "new_note", text.new_note, true, None::<&str>)?;
     let history = Submenu::with_id(app, "history", text.history_notes, true)?;
     let show_hide = MenuItem::with_id(app, "show_hide", text.restore_hidden, true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", text.open_settings, true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", text.quit, true, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
-    let menu = Menu::with_items(app, &[&history, &separator, &show_hide, &settings, &quit])?;
+    let menu = Menu::with_items(app, &[&new_note, &history, &separator, &show_hide, &settings, &quit])?;
 
     app.manage(TrayMenuItems {
+        new_note,
         history,
         show_hide,
         settings,
@@ -83,6 +86,9 @@ pub fn setup_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Erro
                 return;
             }
             match id {
+                "new_note" => {
+                    open_new_note_window(app);
+                }
                 "show_hide" => {
                     restore_hidden_window(app);
                 }
@@ -114,10 +120,7 @@ pub fn setup_tray(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Erro
                 button_state: MouseButtonState::Up,
                 ..
             } => {
-                let app = tray.app_handle();
-                if !restore_latest_hidden_window(app) {
-                    open_new_note_window(app);
-                }
+                open_last_note(tray.app_handle());
             }
             _ => {}
         })
@@ -131,12 +134,31 @@ pub fn sync_locale(app: &tauri::AppHandle) -> Result<(), tauri::Error> {
         return Ok(());
     };
     let text = locale::current_text(app);
+    items.new_note.set_text(text.new_note)?;
     items.history.set_text(text.history_notes)?;
     items.show_hide.set_text(text.restore_hidden)?;
     items.settings.set_text(text.open_settings)?;
     items.quit.set_text(text.quit)?;
     refresh_history_menu(app);
     Ok(())
+}
+
+/// 左键托盘：先恢复最近隐藏的便签；没有就重开最近关闭的那张；
+/// 历史里的便签都开着就聚焦最近的一张；一张历史都没有才新建
+fn open_last_note(app: &tauri::AppHandle) {
+    if restore_latest_hidden_window(app) {
+        return;
+    }
+    let entries = load_history_entries(app);
+    let target = entries
+        .iter()
+        .find(|path| note_window_visibility(app, path).is_none())
+        .or_else(|| entries.first())
+        .cloned();
+    match target {
+        Some(path) => open_note_path_from_tray(app, path),
+        None => open_new_note_window(app),
+    }
 }
 
 fn open_history_item(app: &tauri::AppHandle, index: &str) {

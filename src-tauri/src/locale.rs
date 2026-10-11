@@ -42,6 +42,7 @@ impl NativeLocaleState {
 #[derive(Clone, Copy)]
 pub struct NativeText {
     pub restore_hidden: &'static str,
+    pub new_note: &'static str,
     pub history_notes: &'static str,
     pub history_empty: &'static str,
     pub history_more: &'static str,
@@ -55,6 +56,7 @@ pub struct NativeText {
 
 const EN_US_TEXT: NativeText = NativeText {
     restore_hidden: "Show note",
+    new_note: "New note",
     history_notes: "Recent notes",
     history_empty: "(No history)",
     history_more: "All history...",
@@ -68,6 +70,7 @@ const EN_US_TEXT: NativeText = NativeText {
 
 const ZH_CN_TEXT: NativeText = NativeText {
     restore_hidden: "显示便签",
+    new_note: "新建便签",
     history_notes: "历史便签",
     history_empty: "（暂无历史）",
     history_more: "全部历史…",
