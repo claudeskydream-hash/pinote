@@ -42,6 +42,9 @@ impl NativeLocaleState {
 #[derive(Clone, Copy)]
 pub struct NativeText {
     pub restore_hidden: &'static str,
+    pub history_notes: &'static str,
+    pub history_empty: &'static str,
+    pub history_more: &'static str,
     pub open_settings: &'static str,
     pub quit: &'static str,
     #[cfg(target_os = "windows")]
@@ -52,6 +55,9 @@ pub struct NativeText {
 
 const EN_US_TEXT: NativeText = NativeText {
     restore_hidden: "Show note",
+    history_notes: "Recent notes",
+    history_empty: "(No history)",
+    history_more: "All history...",
     open_settings: "Settings",
     quit: "Quit",
     #[cfg(target_os = "windows")]
@@ -62,6 +68,9 @@ const EN_US_TEXT: NativeText = NativeText {
 
 const ZH_CN_TEXT: NativeText = NativeText {
     restore_hidden: "显示便签",
+    history_notes: "历史便签",
+    history_empty: "（暂无历史）",
+    history_more: "全部历史…",
     open_settings: "设置",
     quit: "退出",
     #[cfg(target_os = "windows")]

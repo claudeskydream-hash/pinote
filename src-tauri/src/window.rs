@@ -414,9 +414,14 @@ pub fn show_settings_window(
     section: Option<String>,
 ) -> Result<(), tauri::Error> {
     info!("show_settings_window_requested");
+    let section = section
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty() && value.chars().all(|c| c.is_ascii_alphanumeric()))
+        .map(ToOwned::to_owned);
     let url = match section.as_deref() {
-        Some("about") => "index.html?view=settings&section=about",
-        _ => "index.html?view=settings",
+        Some(value) => format!("index.html?view=settings&section={value}"),
+        None => "index.html?view=settings".to_string(),
     };
     let result = (|| -> Result<(), tauri::Error> {
         if let Some(window) = app.get_webview_window("settings") {
@@ -427,6 +432,13 @@ pub fn show_settings_window(
             }
             let _ = window.show();
             let _ = window.set_focus();
+            // 已有设置窗口时，通知前端切到请求的分区
+            if let Some(value) = section.as_deref() {
+                let _ = window.emit(
+                    "settings-section-requested",
+                    serde_json::json!({ "section": value }),
+                );
+            }
             if !was_always_on_top {
                 let _ = window.set_always_on_top(true);
                 let _ = window.set_always_on_top(false);

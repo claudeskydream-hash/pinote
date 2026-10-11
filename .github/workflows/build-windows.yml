@@ -1,0 +1,47 @@
+name: Build Windows exe
+
+on:
+  push:
+    branches:
+      - tray-history
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          rustflags: ""
+          cache-workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 不打安装包、不出更新包（那需要原作者的签名私钥），只要 exe
+      - name: Build
+        shell: bash
+        run: pnpm tauri build --no-bundle -c '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      - name: Upload exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: pinote-windows
+          path: src-tauri/target/release/pinote.exe

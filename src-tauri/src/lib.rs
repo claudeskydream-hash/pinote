@@ -679,6 +679,17 @@ fn open_cli_note_windows(app: &tauri::AppHandle, requests: Vec<CliOpenNoteReques
     }
 }
 
+/// 托盘「历史便签」点选：已打开则显示并聚焦，否则按路径新开窗口（与命令行打开同一路径）
+pub(crate) fn open_note_path_from_tray(app: &tauri::AppHandle, note_path: String) {
+    open_cli_note_windows(app, vec![CliOpenNoteRequest { note_path }]);
+}
+
+/// 便签窗口是否存在、是否可见：None = 未打开，Some(true) = 显示中，Some(false) = 已隐藏
+pub(crate) fn note_window_visibility(app: &tauri::AppHandle, note_path: &str) -> Option<bool> {
+    app.get_webview_window(&build_note_window_id(note_path))
+        .map(|window| window.is_visible().unwrap_or(false))
+}
+
 pub(crate) fn open_new_note_window(app: &tauri::AppHandle) {
     let handle = app.clone();
     std::thread::spawn(move || {
